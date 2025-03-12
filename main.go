@@ -19,5 +19,11 @@ func main() {
 
 	BASE_URL := args[0]
 	fmt.Printf("starting crawl of: %s\n", BASE_URL)
-	fmt.Println(getHTML(BASE_URL))
+	pages := map[string]int{}
+	crawlPage(BASE_URL, BASE_URL, pages)
+
+	fmt.Println("\n================ REPORT ================")
+	for k, v := range pages {
+		fmt.Printf("%v: %v\n", k, v)
+	}
 }
