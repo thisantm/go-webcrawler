@@ -3,7 +3,14 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"strings"
 )
+
+func (cfg *config) pagesLen() int {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	return len(cfg.pages)
+}
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
 	cfg.concurrencyControl <- struct{}{}
@@ -12,12 +19,9 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		cfg.wg.Done()
 	}()
 
-	cfg.mu.Lock()
-	if len(cfg.pages) >= cfg.maxPages {
-		cfg.mu.Unlock()
+	if cfg.pagesLen() >= cfg.maxPages {
 		return
 	}
-	cfg.mu.Unlock()
 
 	currURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
@@ -53,6 +57,10 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 	}
 
 	for _, url := range urls {
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			continue
+		}
+
 		fmt.Printf("crawling into: %v\n", url)
 		cfg.wg.Add(1)
 		go cfg.crawlPage(url)

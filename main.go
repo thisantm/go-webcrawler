@@ -64,10 +64,7 @@ func main() {
 	cfg.crawlPage(cfg.baseURL.String())
 	cfg.wg.Wait()
 
-	fmt.Println("\n================ REPORT ================")
-	for k, v := range cfg.pages {
-		fmt.Printf("%v: %v\n", k, v)
-	}
+	printReport(cfg.pages, baseURL.String())
 
 	fmt.Printf("\ntime to run: %v\n", time.Since(t))
 }
