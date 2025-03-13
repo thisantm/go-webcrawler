@@ -6,6 +6,19 @@ import (
 )
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
+	cfg.concurrencyControl <- struct{}{}
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
+
+	cfg.mu.Lock()
+	if len(cfg.pages) >= cfg.maxPages {
+		cfg.mu.Unlock()
+		return
+	}
+	cfg.mu.Unlock()
+
 	currURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
 		fmt.Printf("failed to parse base URL: %v\n", err)
@@ -42,13 +55,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 	for _, url := range urls {
 		fmt.Printf("crawling into: %v\n", url)
 		cfg.wg.Add(1)
-		go func(url string) {
-			defer cfg.wg.Done()
-			cfg.concurrencyControl <- struct{}{}
-			defer func() { <-cfg.concurrencyControl }()
-
-			cfg.crawlPage(url)
-		}(url)
+		go cfg.crawlPage(url)
 	}
 }
 
